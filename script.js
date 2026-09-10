@@ -274,7 +274,7 @@ let learningTeam = null;
 document.getElementById("learnBtn").addEventListener("click", () => {
   learning = true;
   learningTeam = 0;
-  alert("Press the button you want to use for TEAM A now.");
+  document.getElementById("keyBindStatus").textContent = "Press the button for TEAM A now...";
 });
 
 window.addEventListener("keydown", (e) => {
@@ -291,14 +291,14 @@ window.addEventListener("keydown", (e) => {
       keyBindings = keyBindings || {};
       keyBindings.teamAKey = e.code;
       learningTeam = 1;
-      alert("Got it. Now press the button you want to use for TEAM B.");
+      document.getElementById("keyBindStatus").textContent =
+        "Got A=" + e.code + " — now press the button for TEAM B...";
     } else if (learningTeam === 1) {
       keyBindings.teamBKey = e.code;
       saveKeyBindings(keyBindings);
-      updateKeyBindStatus();
       learning = false;
       learningTeam = null;
-      alert("Both buttons learned and saved.");
+      updateKeyBindStatus();
     }
     return;
   }
@@ -307,6 +307,7 @@ window.addEventListener("keydown", (e) => {
   if (e.code === keyBindings.teamAKey) pointFor(0);
   if (e.code === keyBindings.teamBKey) pointFor(1);
 });
+
 
 // ---- Keep the screen awake ----
 let wakeLock = null;
