@@ -1,0 +1,99 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #05060a;
+  color: #fff;
+  font-family: system-ui, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#app {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 220px 1fr;
+  align-items: center;
+}
+
+.team {
+  text-align: center;
+  padding: 20px;
+}
+
+.team-name {
+  font-size: 22px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #9fb8d8;
+  margin-bottom: 10px;
+}
+
+.sets {
+  font-size: 26px;
+  color: #7f92a8;
+  min-height: 34px;
+}
+
+.games {
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.points {
+  font-size: 140px;
+  font-weight: 800;
+  line-height: 1;
+  margin: 10px 0;
+}
+
+#teamA .points, #teamA .games { color: #4da3ff; }
+#teamB .points, #teamB .games { color: #ff6b6b; }
+
+.tap-btn {
+  margin-top: 16px;
+  padding: 14px 22px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  background: #1c2733;
+  color: #fff;
+}
+
+.tap-btn:active { transform: scale(0.97); }
+
+.mid {
+  text-align: center;
+  padding: 10px;
+  border-left: 1px solid #222;
+  border-right: 1px solid #222;
+}
+
+#matchStatus {
+  font-size: 14px;
+  color: #9fb8d8;
+  margin-bottom: 14px;
+}
+
+.mid button {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #1c2733;
+  color: #fff;
+  font-size: 13px;
+}
+
+#resetBtn { background: #4a1c1c; }
+
+.small-note {
+  font-size: 11px;
+  color: #7f92a8;
+  margin: 8px 0;
+}

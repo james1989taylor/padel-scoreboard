@@ -1,0 +1,10 @@
+{
+  "name": "Padel Scoreboard",
+  "short_name": "Padel",
+  "start_url": ".",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#05060a",
+  "theme_color": "#05060a",
+  "icons": []
+}

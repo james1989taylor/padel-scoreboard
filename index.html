@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Padel Scoreboard</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="app">
+    <div class="team" id="teamA">
+      <div class="team-name">Team A</div>
+      <div class="sets" id="setsA"></div>
+      <div class="games" id="gamesA">0</div>
+      <div class="points" id="pointsA">0</div>
+      <button class="tap-btn" id="tapA">+ Point A</button>
+    </div>
+
+    <div class="mid">
+      <div id="matchStatus">Best of 3 sets</div>
+      <button id="undoBtn">Undo</button>
+      <button id="resetBtn">Reset match</button>
+      <div id="wakeLockStatus" class="small-note">Screen lock: checking...</div>
+      <div id="keyBindStatus" class="small-note">Buttons: not set — tap "Learn buttons"</div>
+      <button id="learnBtn">Learn buttons</button>
+    </div>
+
+    <div class="team" id="teamB">
+      <div class="team-name">Team B</div>
+      <div class="sets" id="setsB"></div>
+      <div class="games" id="gamesB">0</div>
+      <div class="points" id="pointsB">0</div>
+      <button class="tap-btn" id="tapB">+ Point B</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
