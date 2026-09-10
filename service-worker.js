@@ -1,4 +1,4 @@
-const CACHE_NAME = "padel-scoreboard-v10";
+const CACHE_NAME = "padel-scoreboard-v11";
 const FILES_TO_CACHE = [
   "./",
   "index.html",

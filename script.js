@@ -304,9 +304,34 @@ window.addEventListener("keydown", (e) => {
   }
 
   if (!keyBindings) return;
-  if (e.code === keyBindings.teamAKey) pointFor(0);
-  if (e.code === keyBindings.teamBKey) pointFor(1);
+  if (e.code === keyBindings.teamAKey) registerRemotePress(0);
+  if (e.code === keyBindings.teamBKey) registerRemotePress(1);
 });
+
+// Pressing the same mapped button 3 times in quick succession undoes the
+// last point instead of adding points - a quick way to fix a mis-press
+// without needing to reach for the phone.
+const TRIPLE_PRESS_WINDOW_MS = 700;
+const remotePressTimestamps = { 0: [], 1: [] };
+
+function registerRemotePress(team) {
+  const now = Date.now();
+  const stamps = remotePressTimestamps[team];
+  stamps.push(now);
+  while (stamps.length > 3) stamps.shift();
+
+  if (stamps.length === 3 && stamps[2] - stamps[0] <= TRIPLE_PRESS_WINDOW_MS) {
+    // The first two presses in this burst were already applied as points above -
+    // undo those, plus one more undo for the actual mistake being corrected.
+    undo();
+    undo();
+    undo();
+    remotePressTimestamps[team] = [];
+    return;
+  }
+
+  pointFor(team);
+}
 
 
 // ---- Keep the screen awake ----
