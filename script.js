@@ -256,25 +256,47 @@ function saveKeyBindings(bindings) {
   localStorage.setItem(KEY_BINDING_STORAGE_KEY, JSON.stringify(bindings));
 }
 
-let keyBindings = loadKeyBindings(); // { teamAKey: "AudioVolumeUp", teamBKey: "PageDown" }
+let keyBindings = loadKeyBindings(); // { teamAKey, teamBKey, undoKey: string|null }
 
 function updateKeyBindStatus() {
   const el = document.getElementById("keyBindStatus");
   if (keyBindings) {
-    el.textContent = "Buttons: A=" + keyBindings.teamAKey + "  B=" + keyBindings.teamBKey;
+    el.textContent =
+      "Buttons: A=" + keyBindings.teamAKey +
+      "  B=" + keyBindings.teamBKey +
+      "  Undo=" + (keyBindings.undoKey || "none");
   } else {
     el.textContent = 'Buttons: not set — tap "Learn buttons"';
   }
 }
 updateKeyBindStatus();
 
+// Learning steps in order: bind Team A, bind Team B, then optionally bind Undo.
 let learning = false;
-let learningTeam = null;
+let learningStep = null; // "teamA" | "teamB" | "undo"
+const skipUndoBtn = document.getElementById("skipUndoBtn");
 
-document.getElementById("learnBtn").addEventListener("click", () => {
+function startLearning() {
   learning = true;
-  learningTeam = 0;
+  learningStep = "teamA";
+  skipUndoBtn.hidden = true;
   document.getElementById("keyBindStatus").textContent = "Press the button for TEAM A now...";
+}
+
+function finishLearning() {
+  saveKeyBindings(keyBindings);
+  learning = false;
+  learningStep = null;
+  skipUndoBtn.hidden = true;
+  updateKeyBindStatus();
+}
+
+document.getElementById("learnBtn").addEventListener("click", startLearning);
+
+skipUndoBtn.addEventListener("click", () => {
+  if (!learning || learningStep !== "undo") return;
+  keyBindings.undoKey = null;
+  finishLearning();
 });
 
 window.addEventListener("keydown", (e) => {
@@ -287,51 +309,33 @@ window.addEventListener("keydown", (e) => {
   e.preventDefault();
 
   if (learning) {
-    if (learningTeam === 0) {
+    if (learningStep === "teamA") {
       keyBindings = keyBindings || {};
       keyBindings.teamAKey = e.code;
-      learningTeam = 1;
+      learningStep = "teamB";
       document.getElementById("keyBindStatus").textContent =
         "Got A=" + e.code + " — now press the button for TEAM B...";
-    } else if (learningTeam === 1) {
+    } else if (learningStep === "teamB") {
       keyBindings.teamBKey = e.code;
-      saveKeyBindings(keyBindings);
-      learning = false;
-      learningTeam = null;
-      updateKeyBindStatus();
+      learningStep = "undo";
+      skipUndoBtn.hidden = false;
+      document.getElementById("keyBindStatus").textContent =
+        "Got B=" + e.code + " — optionally press a button for UNDO, or tap Skip.";
+    } else if (learningStep === "undo") {
+      keyBindings.undoKey = e.code;
+      finishLearning();
     }
     return;
   }
 
   if (!keyBindings) return;
-  if (e.code === keyBindings.teamAKey) registerRemotePress(0);
-  if (e.code === keyBindings.teamBKey) registerRemotePress(1);
-});
-
-// Pressing the same mapped button 3 times in quick succession undoes the
-// last point instead of adding points - a quick way to fix a mis-press
-// without needing to reach for the phone.
-const TRIPLE_PRESS_WINDOW_MS = 700;
-const remotePressTimestamps = { 0: [], 1: [] };
-
-function registerRemotePress(team) {
-  const now = Date.now();
-  const stamps = remotePressTimestamps[team];
-  stamps.push(now);
-  while (stamps.length > 3) stamps.shift();
-
-  if (stamps.length === 3 && stamps[2] - stamps[0] <= TRIPLE_PRESS_WINDOW_MS) {
-    // The first two presses in this burst were already applied as points above -
-    // undo those, plus one more undo for the actual mistake being corrected.
+  if (keyBindings.undoKey && e.code === keyBindings.undoKey) {
     undo();
-    undo();
-    undo();
-    remotePressTimestamps[team] = [];
     return;
   }
-
-  pointFor(team);
-}
+  if (e.code === keyBindings.teamAKey) pointFor(0);
+  if (e.code === keyBindings.teamBKey) pointFor(1);
+});
 
 
 // ---- Keep the screen awake ----
