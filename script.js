@@ -1,3 +1,59 @@
+// ---- Dark / light mode ----
+const THEME_STORAGE_KEY = "padel-theme";
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+}
+
+const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || "light";
+applyTheme(savedTheme);
+
+document.getElementById("themeToggle").addEventListener("click", () => {
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  applyTheme(next);
+  localStorage.setItem(THEME_STORAGE_KEY, next);
+});
+
+// ---- Match settings (team names, best-of-N sets) ----
+const SETTINGS_STORAGE_KEY = "padel-settings";
+const DEFAULT_SETTINGS = { teamAName: "TEAM A", teamBName: "TEAM B", bestOf: 3 };
+
+function loadSettings() {
+  const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+  if (!raw) return { ...DEFAULT_SETTINGS };
+  try {
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+let settings = loadSettings();
+
+function setsToWin() {
+  return Math.ceil(settings.bestOf / 2);
+}
+
+function applySettingsToUI() {
+  document.getElementById("teamAName").textContent = settings.teamAName;
+  document.getElementById("teamBName").textContent = settings.teamBName;
+  document.getElementById("teamANameInput").value = settings.teamAName;
+  document.getElementById("teamBNameInput").value = settings.teamBName;
+  document.getElementById("bestOfSelect").value = String(settings.bestOf);
+}
+applySettingsToUI();
+
+document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+  const aName = document.getElementById("teamANameInput").value.trim().toUpperCase() || DEFAULT_SETTINGS.teamAName;
+  const bName = document.getElementById("teamBNameInput").value.trim().toUpperCase() || DEFAULT_SETTINGS.teamBName;
+  const bestOf = parseInt(document.getElementById("bestOfSelect").value, 10);
+  settings = { teamAName: aName, teamBName: bName, bestOf };
+  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  applySettingsToUI();
+  render();
+  settingsPopover.hidden = true;
+});
+
 // ---- Match state ----
 const state = {
   points: [0, 0],       // current game points, 0/1/2/3 = 0/15/30/40, "Ad" handled specially
@@ -104,7 +160,7 @@ function completeSet(team) {
   state.points = [0, 0];
   state.advantage = null;
 
-  if (state.setWins[team] === 2) {
+  if (state.setWins[team] === setsToWin()) {
     state.matchOver = true;
     state.winner = team;
   }
@@ -146,16 +202,25 @@ function render() {
   document.getElementById("pointsB").textContent = pointLabel(1);
   document.getElementById("gamesA").textContent = state.games[0];
   document.getElementById("gamesB").textContent = state.games[1];
-  document.getElementById("setsA").textContent = state.sets[0].join(" · ");
-  document.getElementById("setsB").textContent = state.sets[1].join(" · ");
+  document.getElementById("setWinsA").textContent = state.setWins[0];
+  document.getElementById("setWinsB").textContent = state.setWins[1];
 
+  const completedSets = state.sets[0].length;
+  const setLabelEl = document.getElementById("setLabel");
   if (state.matchOver) {
-    document.getElementById("matchStatus").textContent =
-      "Match over — Team " + (state.winner === 0 ? "A" : "B") + " wins";
+    setLabelEl.textContent = (state.winner === 0 ? settings.teamAName : settings.teamBName) + " WINS";
   } else if (state.tiebreak) {
-    document.getElementById("matchStatus").textContent = "Tiebreak (first to 7, win by 2)";
+    setLabelEl.textContent = "TIEBREAK";
   } else {
-    document.getElementById("matchStatus").textContent = "Best of 3 sets";
+    setLabelEl.textContent = "SET " + (completedSets + 1);
+  }
+
+  const dotsEl = document.getElementById("setDots");
+  dotsEl.innerHTML = "";
+  for (let i = 0; i < settings.bestOf; i++) {
+    const dot = document.createElement("span");
+    dot.className = "dot" + (i < completedSets ? " done" : i === completedSets && !state.matchOver ? " current" : "");
+    dotsEl.appendChild(dot);
   }
 }
 
@@ -165,6 +230,13 @@ document.getElementById("tapB").addEventListener("click", () => pointFor(1));
 document.getElementById("undoBtn").addEventListener("click", undo);
 document.getElementById("resetBtn").addEventListener("click", () => {
   if (confirm("Reset the whole match?")) resetMatch();
+});
+
+// ---- Settings gear popover ----
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsPopover = document.getElementById("settingsPopover");
+settingsBtn.addEventListener("click", () => {
+  settingsPopover.hidden = !settingsPopover.hidden;
 });
 
 // ---- Bluetooth remote support ----
@@ -206,6 +278,11 @@ document.getElementById("learnBtn").addEventListener("click", () => {
 });
 
 window.addEventListener("keydown", (e) => {
+  // Let normal typing work in text inputs/selects (e.g. the settings form) -
+  // only treat keys as scoreboard/remote-button input outside of those.
+  const tag = e.target.tagName;
+  if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
   // Prevent the page from scrolling/zooming on keys like PageDown/space.
   e.preventDefault();
 

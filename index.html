@@ -9,31 +9,137 @@
 </head>
 <body>
 
-  <div id="app">
-    <div class="team" id="teamA">
-      <div class="team-name">Team A</div>
-      <div class="sets" id="setsA"></div>
-      <div class="games" id="gamesA">0</div>
-      <div class="points" id="pointsA">0</div>
-      <button class="tap-btn" id="tapA">+ Point A</button>
-    </div>
+  <div class="page">
 
-    <div class="mid">
-      <div id="matchStatus">Best of 3 sets</div>
-      <button id="undoBtn">Undo</button>
-      <button id="resetBtn">Reset match</button>
-      <div id="wakeLockStatus" class="small-note">Screen lock: checking...</div>
-      <div id="keyBindStatus" class="small-note">Buttons: not set — tap "Learn buttons"</div>
-      <button id="learnBtn">Learn buttons</button>
-    </div>
+    <header class="topbar">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.5"/>
+          <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8"/>
+        </svg>
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M20.5 14.7A8.5 8.5 0 019.3 3.5a.6.6 0 00-.7-.8 10 10 0 1013.6 12.7.6.6 0 00-.7-.7z"/>
+        </svg>
+      </button>
 
-    <div class="team" id="teamB">
-      <div class="team-name">Team B</div>
-      <div class="sets" id="setsB"></div>
-      <div class="games" id="gamesB">0</div>
-      <div class="points" id="pointsB">0</div>
-      <button class="tap-btn" id="tapB">+ Point B</button>
-    </div>
+      <div class="set-indicator">
+        <h1 class="set-display" id="setLabel">SET 1</h1>
+        <div class="dots" id="setDots"></div>
+      </div>
+
+      <button class="settings-btn" id="settingsBtn" aria-label="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 13a7.9 7.9 0 000-2l2-1.6-2-3.4-2.4.7a8 8 0 00-1.7-1L14.8 3h-4l-.5 2.7a8 8 0 00-1.7 1l-2.4-.7-2 3.4L6 11a7.9 7.9 0 000 2l-2 1.6 2 3.4 2.4-.7a8 8 0 001.7 1l.5 2.7h4l.5-2.7a8 8 0 001.7-1l2.4.7 2-3.4-2-1.6z"/>
+        </svg>
+      </button>
+
+      <div class="settings-popover" id="settingsPopover" hidden>
+        <div class="popover-row field">
+          <label for="teamANameInput">Team A name</label>
+          <input type="text" id="teamANameInput" maxlength="14" placeholder="TEAM A" />
+        </div>
+        <div class="popover-row field">
+          <label for="teamBNameInput">Team B name</label>
+          <input type="text" id="teamBNameInput" maxlength="14" placeholder="TEAM B" />
+        </div>
+        <div class="popover-row field">
+          <label for="bestOfSelect">Match format</label>
+          <select id="bestOfSelect">
+            <option value="1">Best of 1 set</option>
+            <option value="3">Best of 3 sets</option>
+            <option value="5">Best of 5 sets</option>
+          </select>
+        </div>
+        <button id="saveSettingsBtn" class="popover-btn primary">Save</button>
+
+        <hr class="popover-divider" />
+
+        <div class="popover-row" id="wakeLockStatus">Screen lock: checking...</div>
+        <div class="popover-row" id="keyBindStatus">Buttons: not set</div>
+        <button id="learnBtn" class="popover-btn">Learn buttons</button>
+      </div>
+    </header>
+
+    <main class="scoreboard">
+      <section class="team-panel team-a" id="teamA">
+        <div class="team-top">
+          <div class="side-stat games">
+            <span class="stat-label">Games</span>
+            <span class="stat-value" id="gamesA">0</span>
+          </div>
+
+          <div class="team-center">
+            <button class="point-btn" id="tapA">+ Point <span id="pointLabelA">A</span></button>
+
+            <div class="team-heading">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="8" cy="8" r="3.2"/>
+                <path d="M2 19c0-3.3 2.7-5 6-5s6 1.7 6 5v1H2v-1z"/>
+                <circle cx="17" cy="8" r="2.6"/>
+                <path d="M13.5 14.3c1.1-.5 2.3-.8 3.5-.8 3 0 5.5 1.6 5.5 4.6V19h-6.2c-.2-1.9-1.1-3.5-2.8-4.7z"/>
+              </svg>
+              <span id="teamAName">TEAM A</span>
+            </div>
+          </div>
+
+          <div class="side-stat sets">
+            <span class="stat-label">Sets</span>
+            <span class="stat-value" id="setWinsA">0</span>
+          </div>
+        </div>
+
+        <div class="score-num" id="pointsA">0</div>
+      </section>
+
+      <section class="team-panel team-b" id="teamB">
+        <div class="team-top">
+          <div class="side-stat games">
+            <span class="stat-label">Games</span>
+            <span class="stat-value" id="gamesB">0</span>
+          </div>
+
+          <div class="team-center">
+            <button class="point-btn" id="tapB">+ Point <span id="pointLabelB">B</span></button>
+
+            <div class="team-heading">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="8" cy="8" r="3.2"/>
+                <path d="M2 19c0-3.3 2.7-5 6-5s6 1.7 6 5v1H2v-1z"/>
+                <circle cx="17" cy="8" r="2.6"/>
+                <path d="M13.5 14.3c1.1-.5 2.3-.8 3.5-.8 3 0 5.5 1.6 5.5 4.6V19h-6.2c-.2-1.9-1.1-3.5-2.8-4.7z"/>
+              </svg>
+              <span id="teamBName">TEAM B</span>
+            </div>
+          </div>
+
+          <div class="side-stat sets">
+            <span class="stat-label">Sets</span>
+            <span class="stat-value" id="setWinsB">0</span>
+          </div>
+        </div>
+
+        <div class="score-num" id="pointsB">0</div>
+      </section>
+    </main>
+
+    <footer class="controls">
+      <button id="undoBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 12a9 9 0 109-9"/>
+          <path d="M3 4v5h5"/>
+        </svg>
+        UNDO
+      </button>
+      <button id="resetBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12a9 9 0 10-3.5 7.1"/>
+          <path d="M21 4v5h-5"/>
+        </svg>
+        RESET MATCH
+      </button>
+    </footer>
+
   </div>
 
   <script src="script.js"></script>

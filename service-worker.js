@@ -1,10 +1,17 @@
-const CACHE_NAME = "padel-scoreboard-v1";
+const CACHE_NAME = "padel-scoreboard-v6";
 const FILES_TO_CACHE = [
   "./",
   "index.html",
   "style.css",
   "script.js",
-  "manifest.json"
+  "manifest.json",
+  "icons/icon-192.png",
+  "icons/icon-512.png",
+  "fonts/Geist-Regular.woff2",
+  "fonts/Geist-Medium.woff2",
+  "fonts/Geist-SemiBold.woff2",
+  "fonts/Geist-Bold.woff2",
+  "fonts/Geist-Black.woff2"
 ];
 
 self.addEventListener("install", (event) => {
