@@ -338,6 +338,26 @@ document.addEventListener("visibilitychange", () => {
 // first time, so request it on the first tap anywhere on the page.
 document.body.addEventListener("click", requestWakeLock, { once: true });
 
+// ---- Fullscreen (hides the browser address bar on Android Chrome, even outside "Add to Home Screen") ----
+function requestFullscreen() {
+  const el = document.documentElement;
+  if (el.requestFullscreen && !document.fullscreenElement) {
+    el.requestFullscreen().catch(() => {});
+  }
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  } else {
+    requestFullscreen();
+  }
+}
+
+// Same first-tap gesture used for Wake Lock also triggers fullscreen.
+document.body.addEventListener("click", requestFullscreen, { once: true });
+document.getElementById("fullscreenBtn").addEventListener("click", toggleFullscreen);
+
 // ---- Register the offline service worker (see Part 4.5) ----
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
