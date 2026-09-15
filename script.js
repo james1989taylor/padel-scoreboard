@@ -16,7 +16,24 @@ document.getElementById("themeToggle").addEventListener("click", () => {
 
 // ---- Match settings (team names, best-of-N sets) ----
 const SETTINGS_STORAGE_KEY = "padel-settings";
-const DEFAULT_SETTINGS = { teamAName: "TEAM A", teamBName: "TEAM B", bestOf: 3 };
+const DEFAULT_SETTINGS = {
+  teamAName: "TEAM A",
+  teamBName: "TEAM B",
+  bestOf: 3,
+  teamAColor: "#2f6fed",
+  teamBColor: "#1ea15a",
+  font: "geist"
+};
+
+// Font choices: a mix of clear, easy-to-read faces plus one designed
+// specifically to help with dyslexia (OpenDyslexic, self-hosted below).
+const FONT_STACKS = {
+  geist: '"Geist", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  system: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  verdana: 'Verdana, Geneva, sans-serif',
+  georgia: 'Georgia, "Times New Roman", serif',
+  opendyslexic: '"OpenDyslexicRegular", "Comic Sans MS", sans-serif'
+};
 
 function loadSettings() {
   const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -34,12 +51,41 @@ function setsToWin() {
   return Math.ceil(settings.bestOf / 2);
 }
 
+// Colors are applied as CSS custom properties on the root element, which
+// override the theme's defaults regardless of light/dark mode.
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace("#", "");
+  const value = parseInt(clean, 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+}
+
+function applyTeamColors() {
+  const root = document.documentElement;
+  root.style.setProperty("--team-a", settings.teamAColor);
+  root.style.setProperty("--team-a-soft", hexToRgba(settings.teamAColor, 0.14));
+  root.style.setProperty("--team-b", settings.teamBColor);
+  root.style.setProperty("--team-b-soft", hexToRgba(settings.teamBColor, 0.14));
+}
+
+function applyFont() {
+  const stack = FONT_STACKS[settings.font] || FONT_STACKS.geist;
+  document.documentElement.style.setProperty("--app-font", stack);
+}
+
 function applySettingsToUI() {
   document.getElementById("teamAName").textContent = settings.teamAName;
   document.getElementById("teamBName").textContent = settings.teamBName;
   document.getElementById("teamANameInput").value = settings.teamAName;
   document.getElementById("teamBNameInput").value = settings.teamBName;
   document.getElementById("bestOfSelect").value = String(settings.bestOf);
+  document.getElementById("teamAColorInput").value = settings.teamAColor;
+  document.getElementById("teamBColorInput").value = settings.teamBColor;
+  document.getElementById("fontSelect").value = settings.font;
+  applyTeamColors();
+  applyFont();
 }
 applySettingsToUI();
 
@@ -47,11 +93,22 @@ document.getElementById("saveSettingsBtn").addEventListener("click", () => {
   const aName = document.getElementById("teamANameInput").value.trim().toUpperCase() || DEFAULT_SETTINGS.teamAName;
   const bName = document.getElementById("teamBNameInput").value.trim().toUpperCase() || DEFAULT_SETTINGS.teamBName;
   const bestOf = parseInt(document.getElementById("bestOfSelect").value, 10);
-  settings = { teamAName: aName, teamBName: bName, bestOf };
+  const aColor = document.getElementById("teamAColorInput").value || DEFAULT_SETTINGS.teamAColor;
+  const bColor = document.getElementById("teamBColorInput").value || DEFAULT_SETTINGS.teamBColor;
+  const font = document.getElementById("fontSelect").value;
+  settings = { teamAName: aName, teamBName: bName, bestOf, teamAColor: aColor, teamBColor: bColor, font };
   localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
   applySettingsToUI();
   render();
   settingsPopover.hidden = true;
+});
+
+document.getElementById("restoreDefaultsBtn").addEventListener("click", () => {
+  if (!confirm("Restore default team names, colors, format and font?")) return;
+  settings = { ...DEFAULT_SETTINGS };
+  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  applySettingsToUI();
+  render();
 });
 
 // ---- Match state ----
@@ -163,6 +220,94 @@ function completeSet(team) {
   if (state.setWins[team] === setsToWin()) {
     state.matchOver = true;
     state.winner = team;
+    celebrate("MATCH WON", team, { big: true });
+  } else {
+    celebrate("SET WON", team);
+  }
+}
+
+// ---- Set/match win celebration (confetti + colored banner) ----
+// Triggered directly from completeSet() rather than from render(), so
+// replaying a state via Undo/redo never re-plays the animation - only an
+// actual new point that completes a set/match does.
+const CELEBRATION_CONFETTI_COLORS = ["#2f6fed", "#1ea15a", "#ffce3d", "#ff6b60", "#a15be0"];
+
+function spawnConfetti(count, colors) {
+  const overlay = document.getElementById("celebration");
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.style.left = Math.random() * 100 + "vw";
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    const duration = 1.8 + Math.random() * 1.4;
+    const delay = Math.random() * 0.6;
+    piece.style.animationDuration = duration + "s";
+    piece.style.animationDelay = delay + "s";
+    overlay.appendChild(piece);
+    setTimeout(() => piece.remove(), (duration + delay) * 1000 + 100);
+  }
+}
+
+function celebrate(text, team, { big = false } = {}) {
+  const overlay = document.getElementById("celebration");
+  const teamColor = team === 0 ? "var(--team-a)" : "var(--team-b)";
+
+  const label = document.createElement("div");
+  label.className = "celebration-text";
+  label.textContent = text;
+  label.style.color = teamColor;
+  overlay.appendChild(label);
+  setTimeout(() => label.remove(), 2400);
+
+  spawnConfetti(big ? 140 : 60, big ? CELEBRATION_CONFETTI_COLORS : [teamColor, "#ffffff"]);
+  if (big) {
+    setTimeout(() => spawnConfetti(90, CELEBRATION_CONFETTI_COLORS), 350);
+    setTimeout(() => spawnConfetti(90, CELEBRATION_CONFETTI_COLORS), 700);
+  }
+
+  playCelebrationSound(big);
+}
+
+// ---- Celebration sound (synthesized - no audio files to ship/license) ----
+let celebrationAudioCtx = null;
+
+function getCelebrationAudioCtx() {
+  if (!celebrationAudioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    celebrationAudioCtx = new Ctx();
+  }
+  if (celebrationAudioCtx.state === "suspended") celebrationAudioCtx.resume();
+  return celebrationAudioCtx;
+}
+
+function playTone(ctx, freq, startTime, duration, peakGain) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.05);
+}
+
+function playCelebrationSound(big) {
+  const ctx = getCelebrationAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  // Set win: a short 3-note ascending chime.
+  const setNotes = [523.25, 659.25, 783.99]; // C5, E5, G5
+  setNotes.forEach((freq, i) => playTone(ctx, freq, now + i * 0.12, 0.35, 0.25));
+
+  if (big) {
+    // Match win: a longer fanfare on top of the chime above.
+    const fanfare = [783.99, 987.77, 1046.5, 1318.51]; // G5, B5, C6, E6
+    fanfare.forEach((freq, i) => playTone(ctx, freq, now + 0.4 + i * 0.16, 0.5, 0.28));
   }
 }
 
@@ -266,7 +411,7 @@ function updateKeyBindStatus() {
       "  B=" + keyBindings.teamBKey +
       "  Undo=" + (keyBindings.undoKey || "none");
   } else {
-    el.textContent = 'Buttons: not set — tap "Learn buttons"';
+    el.textContent = "Buttons: not set";
   }
 }
 updateKeyBindStatus();
@@ -335,6 +480,121 @@ window.addEventListener("keydown", (e) => {
   }
   if (e.code === keyBindings.teamAKey) pointFor(0);
   if (e.code === keyBindings.teamBKey) pointFor(1);
+});
+
+// ---- Remote button debug overlay ----
+// Bluetooth rings/clickers can pair as a keyboard (fires keydown), as a
+// "consumer control" device (fires keydown with codes like AudioVolumeUp,
+// MediaTrackNext, BrowserBack), or as a generic HID gamepad (no keydown at
+// all - only visible via the Gamepad API). This overlay logs everything so
+// we can see which of those a given remote actually sends.
+const debugOverlay = document.getElementById("debugOverlay");
+const debugLog = document.getElementById("debugLog");
+const debugGamepadStatus = document.getElementById("debugGamepadStatus");
+let debugGamepadRAF = null;
+const debugLastButtonState = new Map(); // gamepad index -> array of pressed booleans
+
+function debugLogLine(text) {
+  const li = document.createElement("li");
+  const time = new Date().toLocaleTimeString();
+  li.textContent = "[" + time + "] " + text;
+  debugLog.prepend(li);
+  while (debugLog.children.length > 200) debugLog.removeChild(debugLog.lastChild);
+}
+
+function debugKeyHandler(e) {
+  debugLogLine(
+    e.type + " key=" + e.key + " code=" + e.code + " keyCode=" + e.keyCode +
+    (e.repeat ? " (repeat)" : "")
+  );
+}
+
+// Some remotes pair as a mouse/scroll-wheel HID device instead of a keyboard,
+// which is why a press can scroll the page or trigger pull-to-refresh without
+// ever firing a keydown. Log these too so we can tell the difference.
+function debugWheelHandler(e) {
+  debugLogLine("wheel deltaX=" + e.deltaX + " deltaY=" + e.deltaY + " deltaMode=" + e.deltaMode);
+}
+
+function debugMouseHandler(e) {
+  debugLogLine(
+    e.type + " button=" + e.button + " buttons=" + e.buttons +
+    " isTrusted=" + e.isTrusted + " x=" + e.clientX + " y=" + e.clientY +
+    " target=" + (e.target && e.target.id || e.target.tagName)
+  );
+}
+
+// pointerType tells us whether a click came from a real finger touch or from
+// a Bluetooth mouse/ring HID device pretending to click - the key signal we
+// need to safely tell "player tapped the screen" apart from "ring clicked".
+function debugPointerHandler(e) {
+  debugLogLine(
+    e.type + " pointerType=" + e.pointerType + " button=" + e.button + " isPrimary=" + e.isPrimary
+  );
+}
+
+function debugPollGamepads() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let connected = 0;
+  for (const pad of pads) {
+    if (!pad) continue;
+    connected++;
+    const prev = debugLastButtonState.get(pad.index) || [];
+    pad.buttons.forEach((btn, i) => {
+      const wasPressed = !!prev[i];
+      if (btn.pressed && !wasPressed) {
+        debugLogLine("gamepad[" + pad.index + "] button " + i + " pressed (" + pad.id + ")");
+      }
+    });
+    debugLastButtonState.set(pad.index, pad.buttons.map((b) => b.pressed));
+  }
+  debugGamepadStatus.textContent = connected
+    ? "Gamepad API: " + connected + " controller(s) connected"
+    : "Gamepad API: no controller connected";
+  debugGamepadRAF = requestAnimationFrame(debugPollGamepads);
+}
+
+function openDebugOverlay() {
+  debugOverlay.hidden = false;
+  window.addEventListener("keydown", debugKeyHandler, true);
+  window.addEventListener("keyup", debugKeyHandler, true);
+  window.addEventListener("wheel", debugWheelHandler, true);
+  window.addEventListener("mousedown", debugMouseHandler, true);
+  window.addEventListener("mouseup", debugMouseHandler, true);
+  window.addEventListener("click", debugMouseHandler, true);
+  window.addEventListener("pointerdown", debugPointerHandler, true);
+  window.addEventListener("pointerup", debugPointerHandler, true);
+  window.addEventListener("gamepadconnected", (e) => {
+    debugLogLine("gamepadconnected: " + e.gamepad.id);
+  });
+  window.addEventListener("gamepaddisconnected", (e) => {
+    debugLogLine("gamepaddisconnected: " + e.gamepad.id);
+  });
+  debugPollGamepads();
+}
+
+function closeDebugOverlay() {
+  debugOverlay.hidden = true;
+  window.removeEventListener("keydown", debugKeyHandler, true);
+  window.removeEventListener("keyup", debugKeyHandler, true);
+  window.removeEventListener("wheel", debugWheelHandler, true);
+  window.removeEventListener("mousedown", debugMouseHandler, true);
+  window.removeEventListener("mouseup", debugMouseHandler, true);
+  window.removeEventListener("click", debugMouseHandler, true);
+  window.removeEventListener("pointerdown", debugPointerHandler, true);
+  window.removeEventListener("pointerup", debugPointerHandler, true);
+  if (debugGamepadRAF) cancelAnimationFrame(debugGamepadRAF);
+  debugGamepadRAF = null;
+}
+
+document.getElementById("debugRemoteBtn").addEventListener("click", () => {
+  settingsPopover.hidden = true;
+  debugLog.innerHTML = "";
+  openDebugOverlay();
+});
+document.getElementById("debugCloseBtn").addEventListener("click", closeDebugOverlay);
+document.getElementById("debugClearBtn").addEventListener("click", () => {
+  debugLog.innerHTML = "";
 });
 
 

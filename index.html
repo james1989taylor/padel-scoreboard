@@ -35,31 +35,63 @@
       </button>
 
       <div class="settings-popover" id="settingsPopover" hidden>
-        <div class="popover-row field">
-          <label for="teamANameInput">Team A name</label>
-          <input type="text" id="teamANameInput" maxlength="14" placeholder="TEAM A" />
-        </div>
-        <div class="popover-row field">
-          <label for="teamBNameInput">Team B name</label>
-          <input type="text" id="teamBNameInput" maxlength="14" placeholder="TEAM B" />
-        </div>
-        <div class="popover-row field">
-          <label for="bestOfSelect">Match format</label>
-          <select id="bestOfSelect">
-            <option value="1">Best of 1 set</option>
-            <option value="3">Best of 3 sets</option>
-            <option value="5">Best of 5 sets</option>
-          </select>
-        </div>
-        <button id="saveSettingsBtn" class="popover-btn primary">Save</button>
+        <div class="popover-columns">
+          <div class="popover-col popover-col-side">
+            <div class="popover-row" id="wakeLockStatus">Screen lock: checking...</div>
+            <div class="popover-row" id="keyBindStatus">Buttons: not set</div>
+            <button id="learnBtn" class="popover-btn">Learn Buttons</button>
+            <button id="skipUndoBtn" class="popover-btn" hidden>Skip (No Undo Button)</button>
+            <button id="fullscreenBtn" class="popover-btn">Toggle Fullscreen</button>
+            <button id="debugRemoteBtn" class="popover-btn" hidden>Debug Remote Button</button>
+          </div>
 
-        <hr class="popover-divider" />
+          <div class="popover-divider-v"></div>
 
-        <div class="popover-row" id="wakeLockStatus">Screen lock: checking...</div>
-        <div class="popover-row" id="keyBindStatus">Buttons: not set</div>
-        <button id="learnBtn" class="popover-btn">Learn buttons</button>
-        <button id="skipUndoBtn" class="popover-btn" hidden>Skip (no undo button)</button>
-        <button id="fullscreenBtn" class="popover-btn">Toggle fullscreen (hide address bar)</button>
+          <div class="popover-col popover-col-format">
+            <div class="popover-row field">
+              <label for="bestOfSelect">Match format</label>
+              <select id="bestOfSelect">
+                <option value="1">Best of 1 set</option>
+                <option value="3">Best of 3 sets</option>
+                <option value="5">Best of 5 sets</option>
+              </select>
+            </div>
+            <div class="popover-row field">
+              <label for="fontSelect">Font</label>
+              <select id="fontSelect">
+                <option value="geist">Geist (default)</option>
+                <option value="system">System default</option>
+                <option value="verdana">Verdana</option>
+                <option value="georgia">Georgia</option>
+                <option value="opendyslexic">OpenDyslexic (dyslexia-friendly)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="popover-divider-v"></div>
+
+          <div class="popover-col popover-col-teams">
+            <div class="popover-row field">
+              <label for="teamANameInput">Team A name</label>
+              <div class="name-color-row">
+                <input type="text" id="teamANameInput" maxlength="14" placeholder="TEAM A" />
+                <input type="color" id="teamAColorInput" aria-label="Team A color" />
+              </div>
+            </div>
+            <div class="popover-row field">
+              <label for="teamBNameInput">Team B name</label>
+              <div class="name-color-row">
+                <input type="text" id="teamBNameInput" maxlength="14" placeholder="TEAM B" />
+                <input type="color" id="teamBColorInput" aria-label="Team B color" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="popover-actions">
+          <button id="restoreDefaultsBtn" class="popover-btn">Restore Default</button>
+          <button id="saveSettingsBtn" class="popover-btn primary">Save</button>
+        </div>
       </div>
     </header>
 
@@ -125,6 +157,8 @@
       </section>
     </main>
 
+    <div class="celebration" id="celebration" aria-hidden="true"></div>
+
     <footer class="controls">
       <button id="undoBtn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -142,6 +176,21 @@
       </button>
     </footer>
 
+  </div>
+
+  <div class="debug-overlay" id="debugOverlay" hidden>
+    <div class="debug-header">
+      <h2>Remote button debug</h2>
+      <button id="debugCloseBtn" class="popover-btn">Close</button>
+    </div>
+    <p class="debug-hint">
+      Press the remote button now. Every event the browser receives is logged below,
+      newest first. If nothing appears at all, the button isn't reaching the page
+      (likely an OS-level volume/media key or a device that isn't pairing as a keyboard).
+    </p>
+    <div class="debug-status" id="debugGamepadStatus">Gamepad API: no controller connected</div>
+    <button id="debugClearBtn" class="popover-btn">Clear log</button>
+    <ul class="debug-log" id="debugLog"></ul>
   </div>
 
   <script src="script.js"></script>
